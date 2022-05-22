@@ -1,0 +1,19 @@
+name: super_resolution
+
+docker_env:
+  image:  super_resolution
+
+entry_points:
+  main:
+    parameters:
+      experiment_name: {type: string, default: "super_resolution"}
+      model_path: {type: string, default: "./isr_best.pth"}
+      train: {type: int, default: 0}
+      registered_model: {type: string, default: None}
+      run_origin: {type: string, default: "none"}
+    command: "python train.py
+                --experiment_name {experiment_name}
+                --model_path {model_path}
+                --registered_model {registered_model}
+                --train {train}
+                --run_origin {run_origin}"
