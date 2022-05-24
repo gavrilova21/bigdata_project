@@ -3,6 +3,7 @@ from io import BytesIO
 import os
 from base64 import b64encode
 import mlflow
+import tempfile
 import zipfile
 import mlflow.pytorch
 
@@ -25,9 +26,6 @@ model = mlflow.pytorch.load_model(model_uri)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def zip_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() =='zip'
 
 @app.route('/', methods=['GET'])
 def predict():
@@ -62,8 +60,6 @@ def predict_api():
 @app.route('/forward_batch', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        import tempfile
-
         temp_dir = tempfile.TemporaryDirectory()
         UPLOAD_FOLDER = temp_dir.name
         # UPLOAD_FOLDER = tmp
