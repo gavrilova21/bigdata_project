@@ -26,6 +26,18 @@ model = mlflow.pytorch.load_model(model_uri)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+def encode_image(image):
+    img_dimensions = str(image.size)
+    buffered = BytesIO()
+
+    # return_img.save("result.png")
+    image.save(buffered, format="PNG")
+    encoded_img = b64encode(buffered.getvalue())
+    return {
+        "dim": img_dimensions,
+        "img": encoded_img.decode('utf-8')
+    }
+
 
 @app.route('/', methods=['GET'])
 def predict():
@@ -44,18 +56,7 @@ def predict_api():
         return_img = execute(img, model, device)
     except Exception:
         return "Model could not proccess image", 403
-
-    img_dimensions = str(return_img.size)
-    buffered = BytesIO()
-
-    # return_img.save("result.png")
-    return_img.save(buffered, format="PNG")
-    encoded_img = b64encode(buffered.getvalue())
-
-    return jsonify({
-        "dim": img_dimensions,
-        "img": encoded_img.decode('utf-8')
-    })
+    return jsonify(encode_image(return_img))
 
 @app.route('/forward_batch', methods=['GET', 'POST'])
 def upload_file():
@@ -78,6 +79,16 @@ def upload_file():
             zip_ref = zipfile.ZipFile(os.path.join(UPLOAD_FOLDER, filename), 'r')
             zip_ref.extractall(UPLOAD_FOLDER)
             zip_ref.close()
+            images_encoded = []
+            for file in os.listdir(UPLOAD_FOLDER):
+                filename = os.fsdecode(file)
+                if not(filename.endswith( ('.jpeg', '.png', '.jpg', '.bmp'))):
+                    continue
+                img = Image.open(os.path.join(UPLOAD_FOLDER, filename))
+                result_img = execute(img, model, device)
+                images_encoded.append(encode_image(result_img))
+            return jsonify(images_encoded)
+
     return render_template('index.html')
 
 @app.route('/metadata', methods=['GET'])
