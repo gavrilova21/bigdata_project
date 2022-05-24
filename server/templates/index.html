@@ -4,7 +4,7 @@
 <body style="width:700px;margin:0 auto;text-align:center">
     <div><h1 align="center">Welcome to the Super Resolution Service</h1></div>
     <div style="width:700px;margin:0 auto;text-align:center">
-        This is an example of Super Resolution.
+        This is an example of Super Resolution. Upload an image.
     </div>
     <div>
         <form align="center" method="POST" action="/forward" enctype="multipart/form-data">
@@ -13,6 +13,12 @@
             <input type="submit">
         </form>
     </div>
-
+    or bunch of images (ZIP ONLY)
+    <div>
+        <form align="center" method="POST" action="/forward_batch" enctype="multipart/form-data">
+            <input type="file", name="file", accept=".zip">
+            <input type="submit">
+        </form>
+    </div>
 </body>
 </html>

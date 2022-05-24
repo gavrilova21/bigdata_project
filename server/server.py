@@ -3,9 +3,10 @@ from io import BytesIO
 import os
 from base64 import b64encode
 import mlflow
+import zipfile
 import mlflow.pytorch
 
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, flash, redirect
 
 import PIL.Image as Image
 from tqdm import tqdm
@@ -24,6 +25,9 @@ model = mlflow.pytorch.load_model(model_uri)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+def zip_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() =='zip'
 
 @app.route('/', methods=['GET'])
 def predict():
@@ -55,6 +59,30 @@ def predict_api():
         "img": encoded_img.decode('utf-8')
     })
 
+@app.route('/forward_batch', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        import tempfile
+
+        temp_dir = tempfile.TemporaryDirectory()
+        UPLOAD_FOLDER = temp_dir.name
+        # UPLOAD_FOLDER = tmp
+        # check if the post request has the file part
+        print(request.files)
+        if 'file' not in request.files:
+            return "Bad request", 400
+        file = request.files['file']
+
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file:
+            filename = file.filename
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            zip_ref = zipfile.ZipFile(os.path.join(UPLOAD_FOLDER, filename), 'r')
+            zip_ref.extractall(UPLOAD_FOLDER)
+            zip_ref.close()
+    return render_template('index.html')
 
 @app.route('/metadata', methods=['GET'])
 def get_metadata():
